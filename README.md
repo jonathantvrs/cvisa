@@ -2,13 +2,18 @@
 
 Este microsserviço é responsável por gerir exclusivamente o limite de crédito disponível para contas pré-existentes no sistema.
 
-## Decisão Arquitetural: Valores em `int64` (Centavos)
-Para garantir a máxima precisão financeira, este projeto **não utiliza** tipos de ponto flutuante (`float32` ou `float64`) para representar dinheiro.
+## Decisões Arquiteturais
+### 1. Prevenção de Condições de Corrida (Concorrência e Locks)
+Em sistemas financeiros, é comum que múltiplas transações ocorram no mesmo milissegundo. Se duas compras de R$ 80,00 chegarem exatamente ao mesmo tempo para uma conta com limite de R$ 100,00, um sistema sem proteção leria o limite como 100 para ambas as requisições e aprovaria as duas, deixando o saldo negativo em R$ -60,00.
 
-O tipo `float` sofre de problemas de arredondamento. Para evitar bugs no saldo das contas, todos os valores monetários são armazenados e trafegados como **Inteiros em centavos**. 
-* Exemplos: 
-    - **R$ 100,00** é representado como `10000`.
-    - **R$ 30,50** é representado como `3050`.
+Para evitar isso, implementamos uma **Estratégia de Bloqueio Pessimista (Pessimistic Locking)** usando Transações de Banco de Dados:
+* Utilizamos a cláusula `SELECT ... FOR UPDATE` (via `clause.Locking` do GORM).
+* **Como funciona:** Quando a primeira requisição chega, o banco de dados "tranca" aquela linha específica da conta. A segunda requisição fica em espera (na fila). Assim que a primeira transação termina (atualizando o limite para R$ 20,00) e liberta o *lock*, a segunda requisição lê o saldo atualizado (R$ 20,00) e é recusada corretamente.
+
+### 2. Valores Financeiros em `int64` (Centavos)
+Para garantir a máxima precisão financeira e evitar falhas críticas, este projeto **não utiliza** tipos de ponto flutuante (`float32` ou `float64`). O tipo `float` sofre de problemas de arredondamento binário na arquitetura dos computadores. Todos os valores monetários são armazenados e trafegados como **Inteiros em centavos**. 
+* Exemplo: **R$ 100,00** é representado como `10000`.
+* Exemplo: **R$ 30,50** é representado como `3050`.
 ---
 ## Endpoints da API
 
