@@ -1,0 +1,30 @@
+# Binários e Executáveis (Gerados ao fazer o 'go build')
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Ficheiros de Teste e Cobertura
+*.test
+*.out
+coverage.txt
+
+# Pastas de Dependências Locais (caso uses o comando 'go mod vendor')
+vendor/
+
+# Ficheiros de Banco de Dados Local (Muito importante para este projeto!)
+*.db
+*.sqlite
+*.sqlite3
+credit_system.db
+
+# Ficheiros de IDEs e Editores de Código (Não submeter configurações pessoais)
+.idea/
+.vscode/
+*.swp
+
+# Ficheiros de Sistema Operativo
+.DS_Store
+Thumbs.db
